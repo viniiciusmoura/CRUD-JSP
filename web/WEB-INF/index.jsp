@@ -44,7 +44,7 @@
         </table>
         
     </div>
-    <!-- Modal -->
+    <!-- Modal CREATE-->
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -55,6 +55,7 @@
           <div class="modal-body">
               <div id="msg"></div>
               <form class="row g-3" action="create" method="post">
+                  <input type="hidden" name="id" id="id"/>
                 <div class="col-md-6">
                   <label for="inputNome" class="form-label">Nome:</label>
                   <input type="text" name="nome" class="form-control" id="inputNome">
@@ -78,6 +79,30 @@
       </div>
     </div>
       
+    <!-- Modal  DELETE-->
+    <div class="modal fade" id="modaldelete" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">Excluir Usuário</h5>
+            </div>
+            <div class="modal-body">
+                <form  class="row formd"  id="modaldelete" action="CRUD-JSP/delete" >
+                        <input type="hidden" name="id" id="idel" value="">
+                        <div>
+                            <p>Tem certeza que deseja excluir <strong id="nome"> </strong>?</p>
+                        </div>
+                        <br><br>
+                        <div class="col-md-6 offset-md-7">
+                            <button type="button" class="btn btn-secondary" id="cancel" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" id="deletep" class="btn btn-danger">Excluir</button>
+                        </div>
+                </form>
+            </div>
+            </div>
+        </div>
+    </div>
+    
     <script>
         
     $(document).ready(function (){
@@ -91,15 +116,8 @@
                 { data: 'nome' },
                 { data: 'sobrenome' },
                 { data: 'idade' },
+                {defaultContent: '<i class="bi bi-pencil"/>',},
                 {
-                    data: null,
-                    className: "dt-center editor-edit",
-                    defaultContent: '<i class="bi bi-pencil"/>',
-                    orderable: false
-                },
-                {
-                    data: null,
-                    className: "dt-center editor-delete",
                     defaultContent: '<i class="bi bi-trash"/>',
                     orderable: false
                 }
@@ -112,6 +130,8 @@
       
       //Abrir modal de cadastrar usuário
       $(".btn-success").click(function(){
+        $("form").trigger("reset");
+        $("#id").val("");
         $("#exampleModalLabel").html("Cadastrar Usuário");
         $(".btn-primary").html("Cadastrar");
         $("#msg").html("");
@@ -119,11 +139,47 @@
       })
       
       //Abrir modal de editar usuário
-      $(".btn-warning").click(function(){
+      $('body').on('click','.bi-pencil',function(){
+        
+        var row = $(this).closest('tr');
+        var data = table.row(row).data();
+        $("#msg").html("");
+        $("#id").val(data.id);
+        $("#inputNome").val(data.nome);
+        $("#inputSobre").val(data.sobrenome);
+        $("#inputIdade").val(data.idade);
         $("#exampleModalLabel").html("Editar Usuário");
         $(".btn-primary").html("Salvar");
         $("#exampleModal").modal("show");
       })
+      
+        //Delete modal usuário
+        $('body').on('click', '.bi-trash', function (e) {
+            e.preventDefault();
+            var row=$(this).closest('tr');
+            var data=table.row(row).data();
+            $("#idel").val(data.id)
+            $("#nome").html(data.nome)
+            $("#modaldelete").modal("show");
+        });
+       //Deletar usuário
+       $("#deletep").click(function(e){
+           e.preventDefault();
+           frm=$('.formd');
+            $.ajax({
+            type: "post",
+            url: frm.attr('action'),
+            data: frm.serialize(),
+            success: function (data) {
+                table.ajax.reload();
+                $('#modaldelete').modal('hide');
+            },
+            error: function (data) {
+                console.log('Error:', data);
+            }
+        });
+       });
+      
       
       //Cadastrar usuário no banco
       $(".btn-primary").click(function (e){
@@ -134,8 +190,12 @@
               data: $("form").serialize(),
               success: function (data){
                   table.ajax.reload();
-                  $("#msg").html("<div class='alert alert-success' role='alert'>"+JSON.parse(data).nome+" cadastrado com sucesso</div>");
-                  $("form").trigger("reset");
+                  if($('#id').val()==''){
+                    $("#msg").html("<div class='alert alert-success' role='alert'>"+JSON.parse(data).nome+" cadastrado com sucesso</div>");
+                    $("form").trigger("reset");
+                  }else{
+                      $('#exampleModal').modal('hide');
+                  }
               },
               error: function(erro){
                   console.log("Ocorreu um erro: "+erro)

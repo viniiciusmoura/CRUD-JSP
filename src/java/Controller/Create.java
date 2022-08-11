@@ -68,24 +68,30 @@ public class Create extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
-        String nome,sobrenome,idade;
+        String nome,sobrenome,idade,id;
+        id=request.getParameter("id");
         nome=request.getParameter("nome");
         sobrenome=request.getParameter("sobrenome");
         idade=request.getParameter("idade");
         if(nome!=null&&sobrenome!=null&&idade!=null){
             try(UsuarioDaoClasse dao = new UsuarioDaoClasse()){
-                Usuario user = new Usuario(0,nome,sobrenome,Integer.parseInt(idade));
-                response.getWriter().println(dao.createUsuario(user));
+                if(id.length()==0||dao.seachUser(Integer.parseInt(id))==null){
+                    Usuario user = new Usuario(0,nome,sobrenome,Integer.parseInt(idade));
+                    response.getWriter().println(dao.createUsuario(user));
+                }else{
+                    response.getWriter().print(dao.editar(new Usuario(Integer.parseInt(id),nome,sobrenome,Integer.parseInt(idade))));
+                }
             } catch (ErroDAO ex) {
                 Logger.getLogger(Create.class.getName()).log(Level.SEVERE, null, ex);
             } catch (Exception ex) {
                 Logger.getLogger(Create.class.getName()).log(Level.SEVERE, null, ex);
             }
+            }
         }
         
         
-    }
-
+    
+        
     /**
      * Returns a short description of the servlet.
      *
@@ -95,5 +101,5 @@ public class Create extends HttpServlet {
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
-
+   
 }
